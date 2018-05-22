@@ -3,8 +3,9 @@
     width: 600px;
 }
 
-#container-for-svg {
+#container-for-svg, #svg-and-label {
     width: 533px;
+    display: inline-block;
 }
 
 .btn {

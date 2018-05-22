@@ -1,12 +1,18 @@
 browserAction = (function () {
     'use strict';
     var getData, init, toggleOption, containerForSVG, createCheckBoxesPerOption, removeInlineContent, fixToBoudingBox, getDimensions,
-    setLabel, label;
+        setLabel, label, maxWidth, download;
 
     init = function () {
-        var btn = document.querySelector('#data');
-        if (btn)
-            btn.addEventListener('click', getData);
+        var data = document.querySelector('#data');
+        if (data)
+            data.addEventListener('click', getData);
+
+        var downloadBtn = document.querySelector('#download');
+        if (downloadBtn)
+            downloadBtn.addEventListener('click', download);
+
+        maxWidth = 533;
     }
 
     getData = function () {
@@ -23,23 +29,33 @@ browserAction = (function () {
             containerForSVG = document.getElementById('container-for-svg');
             containerForSVG.innerHTML = results[0].node;
 
-            var svgContainer = containerForSVG.querySelector('svg');
+            var svgContainer = document.querySelector('.svg-container svg');
             if (svgContainer) {
-                svgContainer.setAttribute('viewBox', "0 0 533 600");
-                svgContainer.setAttribute('width', '533px');
+                svgContainer.style.width = maxWidth + 'px';
+                svgContainer.style.height = maxWidth + 'px';
+            }
+
+            var svg = containerForSVG.querySelector('svg');
+            if (svg) {
+                svg.setAttribute('viewBox', '0 0 ' + maxWidth + ' 600');
+                svg.style.width = maxWidth + 'px';
+                svg.style.height = maxWidth + 'px';
             }
 
             label = document.querySelector('#label');
             options = document.getElementById('list');
-            
+
             options.innerHTML = '';
+            label.innerText = '';
+
             svgContainerList = document.querySelectorAll('svg > g');
             for (i = 0; i < svgContainerList.length; ++i) {
                 createCheckBoxesPerOption(i, svgContainerList[i])
                 removeInlineContent(svgContainerList[i].id);
             }
 
-            fixToBoudingBox();
+            var svgContainerList = fixToBoudingBox();
+            setLabel(svgContainerList);
         });
     };
 
@@ -94,48 +110,50 @@ browserAction = (function () {
             component.classList += ' do-not-show-option';
         }
 
-        fixToBoudingBox();
+        var svgContainerList = fixToBoudingBox();
+        setLabel(svgContainerList);
     };
 
     fixToBoudingBox = function () {
-        var svgContainerList = document.querySelectorAll('svg > g'), i, component, scale, dimensions,
-            svgContainer, svg, svgContainerBoundingRect, paddingLeft, transform, paddingTop;
+        var svgContainerList, i, component, scale, dimensions, maxWidth, svgContainer, svg,
+            svgContainerBoundingRect, paddingLeft, transform, paddingTop;
 
-        for (i = 0; i < svgContainerList.length; ++i) {
-            component = containerForSVG.querySelector('#' + svgContainerList[i].id);
-            component.setAttribute('transform', '');
-        }
-
+        maxWidth = maxWidth || 533;
+        svgContainer = document.querySelector('#container-for-svg');
         svg = document.querySelector('svg');
 
-        dimensions = getDimensions(svgContainerList);
-        svg.style.width = '533px';
+        if (svg && svgContainer) {
+            svg.style.width = maxWidth + 'px';
+            svgContainer.style.width = maxWidth + 'px';
+            svgContainerList = document.querySelectorAll('svg > g');
 
-
-        if (dimensions && dimensions.width) {
-
-            scale = 533 / dimensions.width;
-            svg.style.height = (dimensions.height * scale) + 'px';
-
-
-            for (i = 0; i < dimensions.componentList.length; ++i)
-                dimensions.componentList[i].setAttribute('transform', "scale(" + scale + ", " + scale + ")");
-
-            svgContainer = document.querySelector('#container-for-svg');
-            svgContainerBoundingRect = svgContainer.getBoundingClientRect();
+            for (i = 0; i < svgContainerList.length; ++i)
+                svgContainerList[i].removeAttribute('transform');
 
             dimensions = getDimensions(svgContainerList);
-            paddingLeft = svgContainerBoundingRect.left < dimensions.farLeft ? svgContainerBoundingRect.left - dimensions.farLeft : dimensions.farLeft - svgContainerBoundingRect.left;
-            paddingTop = svgContainerBoundingRect.top > dimensions.farTop ? dimensions.farTop - svgContainerBoundingRect.top : svgContainerBoundingRect.top - dimensions.farTop;
 
+            if (dimensions && dimensions.width && dimensions.height && dimensions.farLeft && dimensions.farTop) {
+                scale = maxWidth / dimensions.width;
+                svg.style.height = (dimensions.height * scale) + 'px';
+                svg.setAttribute('viewBox', '0 0 533 ' + (dimensions.height * scale));
 
-            for (i = 0; i < dimensions.componentList.length; ++i) {
-                transform = "translate(" + paddingLeft + ", " + paddingTop + ") scale(" + scale + ", " + scale + ")";
-                dimensions.componentList[i].setAttribute('transform', transform);
+                for (i = 0; i < svgContainerList.length; ++i)
+                    svgContainerList[i].setAttribute('transform', "scale(" + scale + ", " + scale + ")");
+
+                svgContainerBoundingRect = svgContainer.getBoundingClientRect();
+
+                dimensions = getDimensions(svgContainerList);
+                paddingLeft = svgContainerBoundingRect.left < dimensions.farLeft ? svgContainerBoundingRect.left - dimensions.farLeft : dimensions.farLeft - svgContainerBoundingRect.left;
+                paddingTop = svgContainerBoundingRect.top > dimensions.farTop ? dimensions.farTop - svgContainerBoundingRect.top : svgContainerBoundingRect.top - dimensions.farTop;
+
+                for (i = 0; i < svgContainerList.length; ++i) {
+                    transform = "translate(" + paddingLeft + ", " + paddingTop + ") scale(" + scale + ", " + scale + ")";
+                    svgContainerList[i].setAttribute('transform', transform);
+                }
             }
         }
 
-        setLabel();
+        return svgContainerList;
     };
 
     getDimensions = function (svgContainerList) {
@@ -144,7 +162,7 @@ browserAction = (function () {
         for (i = 0; i < svgContainerList.length; ++i) {
             component = svgContainerList[i];
 
-            if (component.classList.value.trim().indexOf('do-not-show-option') === -1) {
+            if (component && component.classList && component.classList.value.trim().indexOf('do-not-show-option') === -1) {
                 boundingRect = component.getBoundingClientRect();
                 if (!farLeft || farLeft > boundingRect.left)
                     farLeft = boundingRect.left;
@@ -157,8 +175,6 @@ browserAction = (function () {
 
                 if (!farBottom || farBottom < boundingRect.bottom)
                     farBottom = boundingRect.bottom;
-
-                componentList.push(component);
             }
         }
 
@@ -171,19 +187,78 @@ browserAction = (function () {
             farLeft: farLeft,
             farRight: farRight,
             farTop: farTop,
-            farBottom: farBottom,
-            componentList: componentList
+            farBottom: farBottom
         };
     };
 
-    setLabel = function() {
-        label.innerText = 'Label';
+    setLabel = function (svgContainerList) {
+        var id;
+        if (!label)
+            label = document.querySelector('#label');
+
+        if (svgContainerList && svgContainerList.length > 0) {
+            id = svgContainerList[0].id;
+
+            for (var i = 0; i < svgContainerList.length; ++i) {
+                if (svgContainerList[i].id.indexOf('o-') > -1) {
+                    id = svgContainerList[i].id;
+                }
+            }
+
+            var index = id.lastIndexOf('-');
+            if (index > -1)
+                id = id.substring(0, index);
+
+            index = id.lastIndexOf('-');
+            if (index > -1)
+                id = id.substring(index + 1);
+
+            label.innerText = 'Option ' + id[0].toUpperCase() + id.slice(1);
+        } else {
+            label.innerText = 'Option Label';
+        }
+
+        return label.innerText;
     }
 
-    init();
+    download = function () {
+        var element = document.querySelector("#svg-and-label");
+        var elementBounding = element.getClientRects();
 
-    return {
-        getDimensions: getDimensions
-    };
+        var svg = document.querySelector("svg");
+        //var svg = element;
+        var svgData = new XMLSerializer().serializeToString(svg);
+        var canvas = document.createElement("canvas");
 
-})();
+        canvas.width = elementBounding.width;
+        canvas.height = elementBounding.height;
+        canvas.style.width = elementBounding.width;
+        canvas.style.height = elementBounding.height;
+
+        var ctx = canvas.getContext("2d");
+        ctx.scale(1, 1);
+        var img = document.createElement("img");
+        img.setAttribute("src", "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData))));
+        img.onload = function () {
+            ctx.drawImage(img, 0, 0);
+            var canvasdata = canvas.toDataURL("image/png", 1);
+            console.log(canvasdata);
+            var pngimg = '<img src="' + canvasdata + '">';
+            
+            var a = document.createElement("a");
+            a.download = "download_img" + ".png";
+            a.href = canvasdata;
+            document.body.appendChild(a);
+            a.click();
+        }
+    }
+
+        init();
+
+        return {
+            getDimensions: getDimensions,
+            fixToBoudingBox: fixToBoudingBox,
+            setLabel: setLabel
+        };
+
+    }) ();

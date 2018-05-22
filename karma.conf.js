@@ -3,8 +3,8 @@ module.exports = function (config) {
         basePath: '',
         frameworks: ['jasmine', 'browserify'],
         files: [
-          'browserAction.js',
-          'browserAction.spec.js'
+          '*browserAction.js',
+          '*browserAction.spec.js'
         ],
 
         plugins: [
