@@ -1,0 +1,12 @@
+{
+  "name": "SVG Layer to JPG",
+  "browser_action": {
+    "default_popup": "browserAction.html"
+  },
+  "version": "0.1",
+  "description": "Allows layers of an SVG to be turned on/off. Final result can be downloaded to the users drive",
+  "permissions": [
+    "activeTab"
+  ],
+  "manifest_version": 2
+}

@@ -1,0 +1,49 @@
+﻿body {
+    height: 600px;
+    width: 600px;
+}
+
+#container-for-svg {
+    width: 533px;
+}
+
+.btn {
+    padding: 10px;
+    background-color: #929292;
+    width: 50px;
+    border-radius: 5px;
+    margin: 5px 0;
+    cursor: pointer;
+}
+
+.do-not-show-option {
+    display: none !important;
+}
+
+.show-option {
+    display: block !important;
+    visibility: visible;
+}
+
+input[type="checkbox"] {
+    height: 20px;
+    width: 20px;
+}
+
+.list {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.list-item {
+    padding: 5px 0;
+    width: 200px;
+}
+
+#label {
+    width: 533px;
+    font-size: 40px;
+    text-align: center;
+    margin-bottom: 10px;
+}
