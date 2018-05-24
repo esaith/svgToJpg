@@ -1,7 +1,7 @@
 browserAction = (function () {
     'use strict';
     var getData, init, toggleOption, containerForSVG, createCheckBoxesPerOption, removeInlineContent, fixToBoudingBox, getDimensions,
-        setLabel, label, maxWidth, download;
+        setLabel, label, maxWidth, download, removeHiddenGElements, addLabel;
 
     init = function () {
         var data = document.querySelector('#data');
@@ -38,8 +38,8 @@ browserAction = (function () {
             var svg = containerForSVG.querySelector('svg');
             if (svg) {
                 svg.setAttribute('viewBox', '0 0 ' + maxWidth + ' 600');
-                svg.style.width = maxWidth + 'px';
-                svg.style.height = maxWidth + 'px';
+                svg.setAttribute('width', maxWidth + 'px');
+                svg.setAttribute('height', maxWidth + 'px');
             }
 
             label = document.querySelector('#label');
@@ -47,6 +47,9 @@ browserAction = (function () {
 
             options.innerHTML = '';
             label.innerText = '';
+            label.setAttribute('white-space', 'pre-wrap');
+            label.setAttribute('width', '533px');
+            label.setAttribute('style', 'text-align: center');
 
             svgContainerList = document.querySelectorAll('svg > g');
             for (i = 0; i < svgContainerList.length; ++i) {
@@ -123,7 +126,7 @@ browserAction = (function () {
         svg = document.querySelector('svg');
 
         if (svg && svgContainer) {
-            svg.style.width = maxWidth + 'px';
+            svg.setAttribute('width', maxWidth + 'px');
             svgContainer.style.width = maxWidth + 'px';
             svgContainerList = document.querySelectorAll('svg > g');
 
@@ -134,8 +137,9 @@ browserAction = (function () {
 
             if (dimensions && dimensions.width && dimensions.height && dimensions.farLeft && dimensions.farTop) {
                 scale = maxWidth / dimensions.width;
-                svg.style.height = (dimensions.height * scale) + 'px';
-                svg.setAttribute('viewBox', '0 0 533 ' + (dimensions.height * scale));
+                var height = (dimensions.height * scale);
+                svg.setAttribute('height', height + 'px');
+                svg.setAttribute('viewBox', '0 0 533 ' + height);
 
                 for (i = 0; i < svgContainerList.length; ++i)
                     svgContainerList[i].setAttribute('transform', "scale(" + scale + ", " + scale + ")");
@@ -221,44 +225,81 @@ browserAction = (function () {
         return label.innerText;
     }
 
+    removeHiddenGElements = function (element) {
+        var children = element.querySelectorAll('svg > g');
+        for (var i = 0; i < children.length; ++i) {
+            if (children[i].classList.contains('do-not-show-option'))
+                children[i].remove();
+        }
+
+        return element;
+    };
+
+    addLabel = function (svgData, top) {
+        var index = svgData.indexOf('</svg>');
+        var label = document.querySelector('#label');
+        if (index > -1 && label) {
+            var labelBounding = label.getBoundingClientRect();
+            var pre = '<foreignObject width="533px" height="' + labelBounding.height + 'px" y="' + (top - labelBounding.height) + 'px" x="0px" font-size="40px">' +
+                '<div xmlns="http://www.w3.org/1999/xhtml">';
+
+            var post = '</div>' +
+                '</foreignObject>';
+
+            svgData = svgData.substring(0, index) + pre + label.outerHTML + post + svgData.substring(index);
+        }
+
+        return svgData;
+    };
+
     download = function () {
         var element = document.querySelector("#svg-and-label");
-        var elementBounding = element.getClientRects();
+        var copy = element.cloneNode(element);
+        copy = removeHiddenGElements(copy);
 
-        var svg = document.querySelector("svg");
-        //var svg = element;
+        var elementBounding = element.getBoundingClientRect();
+
+        var svg = copy.querySelector("svg");
+        svg.setAttribute('viewBox', '0 0 ' + maxWidth + ' ' + elementBounding.height);
+
+        var svgBounding = element.querySelector('svg').getBoundingClientRect();
         var svgData = new XMLSerializer().serializeToString(svg);
+        svgData = addLabel(svgData, elementBounding.height);
         var canvas = document.createElement("canvas");
 
         canvas.width = elementBounding.width;
         canvas.height = elementBounding.height;
         canvas.style.width = elementBounding.width;
         canvas.style.height = elementBounding.height;
+        document.body.appendChild(canvas);
 
         var ctx = canvas.getContext("2d");
-        ctx.scale(1, 1);
         var img = document.createElement("img");
+
         img.setAttribute("src", "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData))));
+        img.setAttribute('width', elementBounding.width);
+        img.setAttribute('height', elementBounding.height);
+
         img.onload = function () {
-            ctx.drawImage(img, 0, 0);
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 20);
             var canvasdata = canvas.toDataURL("image/png", 1);
-            console.log(canvasdata);
-            var pngimg = '<img src="' + canvasdata + '">';
-            
+
             var a = document.createElement("a");
-            a.download = "download_img" + ".png";
+            a.download = "download_img.png";
             a.href = canvasdata;
             document.body.appendChild(a);
             a.click();
         }
     }
 
-        init();
+    init();
 
-        return {
-            getDimensions: getDimensions,
-            fixToBoudingBox: fixToBoudingBox,
-            setLabel: setLabel
-        };
+    return {
+        getDimensions: getDimensions,
+        fixToBoudingBox: fixToBoudingBox,
+        setLabel: setLabel
+    };
 
-    }) ();
+})();
