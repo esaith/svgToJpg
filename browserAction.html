@@ -1,21 +1,30 @@
 ﻿<!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
-
 <head>
     <meta charset="utf-8" />
     <title>Browser Action Page</title>
     <link rel="stylesheet" href="browserAction.css" />
 </head>
-
 <body>
-    <div class="btn" id="data">Get Data</div>
-    <div class="btn" id="download">Download</div>
-    <div id="list"></div>
+    <div class="row flex align-center">
+        <div class='btn' id='toggleCheckboxes'>Toggle All</div>
+        <div class="btn" id="download">Download</div>
+        <div class="btn" id="downloadAll">Download All</div>
+    </div>
+    <div class="row flex align-center">
+        <div class="label">File name:</div>
+        <input type="text" id='fileName' placeholder="Filename" />
+        <input type="checkbox" class="btn" id="jpg" checked><div>JPG</div>
+        <input type="checkbox" class="btn" id="png" /><div>PNG</div>
+    </div>
+    <div class="row flex align-center">
+        <div class="label">Width: </div>
+        <input type="text" id='width' placeholder="Width" value="533" />
+    </div>
+    <div id="options"></div>
     <div id="svg-and-label">
         <div id="container-for-svg"></div>
-        <div id="label" contenteditable="true"></div>
     </div>
     <script src="browserAction.js"></script>
 </body>
-
 </html>

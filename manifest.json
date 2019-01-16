@@ -1,5 +1,5 @@
 {
-  "name": "SVG Layer to JPG",
+  "name": "svgtojpg",
   "browser_action": {
     "default_popup": "browserAction.html"
   },
